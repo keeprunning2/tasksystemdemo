@@ -27,9 +27,15 @@ import java.util.concurrent.locks.Lock;
 
 public class ZookeeperDistributeLock {
 
-    private static final String LOCK_PATH = "/zkfile/lock";
-    private static final String ZOOKEEPER_IP_PORT = "localhost:2181";
+    private String LOCK_PATH = "/zkfile/lock";
+    private String ZOOKEEPER_IP_PORT = "localhost:2181";
     private static Logger logger = LoggerFactory.getLogger(ZookeeperDistributeLock.class);
+
+
+    public ZookeeperDistributeLock(String ip_port, String path) {
+        LOCK_PATH = path;
+        ZOOKEEPER_IP_PORT = ip_port;
+    }
 
     /*
     分布式锁弊端：如果因进程终止等异常情况锁不释放，那么其它进程无法获取到锁。
@@ -118,7 +124,7 @@ public class ZookeeperDistributeLock {
     public void setListenter() {
         try {
 
-            System.out.println("listener path:" + LOCK_PATH +"  zookeeper:"+ZOOKEEPER_IP_PORT);
+            System.out.println("listener path:" + LOCK_PATH + "  zookeeper:" + ZOOKEEPER_IP_PORT);
             RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
             CuratorFramework client = CuratorFrameworkFactory.newClient(ZOOKEEPER_IP_PORT, retryPolicy);
             ExecutorService pool = Executors.newCachedThreadPool();

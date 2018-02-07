@@ -12,33 +12,25 @@ import java.util.Properties;
 
 public class Application {
 
-    private static Logger logger = LoggerFactory.getLogger(Application.class);
-
     public static void main(String[] args) {
         try {
             //1. read zookeeper config
-            logger.debug("1. read zookeeper config");
+            LogHelper.logger.debug("1. read zookeeper config");
             Properties props = new Properties();
             props.load(Application.class.getClassLoader().getResourceAsStream("zkconfig.properties"));
             String zk_ip_port = props.getProperty("zk.ip_port");
             String leaderpath = props.getProperty("zk.leaderpath");
             System.out.println(zk_ip_port);
             if (zk_ip_port == null || zk_ip_port.length() < 1) {
-                logger.error("zookeeper ip and port is null ");
+                LogHelper.logger.error("zookeeper ip and port is null ");
             }
-            //2. listener the zknode
-            logger.debug("2. listener the zknode");
-            ZookeeperDistributeLock lock = new ZookeeperDistributeLock();
-            lock.setListenter();
-            //3. start leader selector
-            logger.debug("3. start leader selector");
-            String name = getLocalIP();
-            CuratorFramework client = getClient();
-            CuratorSelectorClient selectorClient = new CuratorSelectorClient(client, leaderpath, name);
-            selectorClient.start();
 
-            //4.  new task timer in selector success method
-            logger.debug("4.  new task timer in selector success method");
+            //2. start leader selector
+            LogHelper.logger.debug("2. start leader selector");
+            String name = getLocalIP();
+            CuratorSelectorClient selectorClient = new CuratorSelectorClient(zk_ip_port, leaderpath, name, "demo");
+            selectorClient.start();
+            //3.  listener the zknode and new task timer in takeLeadership  method
 
             System.out.println("in waiting ...");
             Thread.sleep(Integer.MAX_VALUE);
@@ -50,18 +42,6 @@ public class Application {
         }
     }
 
-    private static CuratorFramework getClient() {
-        RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
-        CuratorFramework client = CuratorFrameworkFactory.builder()
-                .connectString("127.0.0.1:2181")
-                .retryPolicy(retryPolicy)
-                .sessionTimeoutMs(6000)
-                .connectionTimeoutMs(3000)
-                .namespace("demo")
-                .build();
-        client.start();
-        return client;
-    }
 
     private static String getLocalIP() {
         InetAddress ia = null;
